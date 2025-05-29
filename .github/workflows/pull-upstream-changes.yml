@@ -1,0 +1,43 @@
+name: Pull upstream changes
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # daily at 2am UTC
+  # allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  pull-upstream-changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+
+      - name: Configure Git
+        run: |
+          git remote add upstream https://github.com/apache/airflow.git
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@datadoghq.com"
+
+      - name: Fast-forward upstream-main
+        run: |
+          git fetch upstream main
+          git checkout -B upstream-main upstream/main
+          git push origin upstream-main --force --quiet
+
+      - name: Rebase main
+        run: |
+          # only attempt a rebase if main has unique commits
+          git checkout main
+          git fetch origin main
+          git pull origin main
+          if ! git merge-base --is-ancestor upstream-main main; then
+            git rebase --rebase-merges --autosquash upstream-main
+          else
+            echo "main is already up to date with upstream-main"
+          fi
+
+      - name: Push updated main
+        run: git push origin main --force-with-lease --quiet
