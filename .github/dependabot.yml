@@ -36,7 +36,6 @@ updates:
       pip-dependency-updates:
         patterns:
           - "*"
-
   - package-ecosystem: npm
     cooldown:
       default-days: 4
@@ -48,7 +47,7 @@ updates:
       core-ui-package-updates:
         patterns:
           - "*"
-
+    open-pull-requests-limit: 0
   - package-ecosystem: npm
     cooldown:
       default-days: 4
@@ -60,7 +59,7 @@ updates:
       core-ui-package-updates:
         patterns:
           - "*"
-
+    open-pull-requests-limit: 0
   - package-ecosystem: npm
     cooldown:
       default-days: 4
@@ -72,7 +71,7 @@ updates:
       ui-plugin-template-package-updates:
         patterns:
           - "*"
-
+    open-pull-requests-limit: 0
   - package-ecosystem: npm
     cooldown:
       default-days: 4
@@ -84,7 +83,7 @@ updates:
       edge-ui-package-updates:
         patterns:
           - "*"
-
+    open-pull-requests-limit: 0
   - package-ecosystem: npm
     cooldown:
       default-days: 4
@@ -96,7 +95,7 @@ updates:
       fab-ui-package-updates:
         patterns:
           - "*"
-
+    open-pull-requests-limit: 0
   # Repeat dependency updates on v3-1-test branch as well
   - package-ecosystem: pip
     cooldown:
@@ -118,7 +117,6 @@ updates:
       pip-dependency-updates:
         patterns:
           - "*"
-
   - package-ecosystem: npm
     cooldown:
       default-days: 4
@@ -131,7 +129,7 @@ updates:
       core-ui-package-updates:
         patterns:
           - "*"
-
+    open-pull-requests-limit: 0
   # Repeat dependency updates on 2.11 branch as well
   - package-ecosystem: pip
     cooldown:
@@ -148,7 +146,6 @@ updates:
       pip-dependency-updates:
         patterns:
           - "*"
-
   - package-ecosystem: npm
     cooldown:
       default-days: 4
@@ -161,7 +158,7 @@ updates:
       core-ui-package-updates:
         patterns:
           - "*"
-
+    open-pull-requests-limit: 0
   - package-ecosystem: "uv"
     cooldown:
       default-days: 4
