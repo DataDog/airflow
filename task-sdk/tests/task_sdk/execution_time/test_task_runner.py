@@ -3861,3 +3861,70 @@ class TestTaskRunnerMetrics:
                 "operator_failures", tags={**expected_tags, "operator": "FailingOperator"}
             )
             mock_stats.incr.assert_any_call("ti_failures", tags=expected_tags)
+
+    def test_ti_start_metrics(self, create_runtime_ti, mock_supervisor_comms):
+        from airflow.sdk.execution_time.task_runner import run
+
+        task = PythonOperator(
+            task_id="start_task",
+            python_callable=lambda: "success",
+        )
+
+        runtime_ti = create_runtime_ti(task=task, dag_id="test_ti_start")
+        context = runtime_ti.get_template_context()
+        log = mock.MagicMock()
+
+        with patch("airflow.sdk.execution_time.task_runner.Stats") as mock_stats:
+            state, _, error = run(runtime_ti, context, log)
+
+            assert state == TaskInstanceState.SUCCESS
+            assert error is None
+
+            expected_tags = {"dag_id": "test_ti_start", "task_id": "start_task"}
+
+            mock_stats.incr.assert_any_call("ti.start.test_ti_start.start_task", tags=expected_tags)
+            mock_stats.incr.assert_any_call("ti.start", tags=expected_tags)
+
+    def test_ti_finish(self, create_runtime_ti, mock_supervisor_comms):
+        from airflow.sdk.api.datamodels._generated import TaskInstanceState
+        from airflow.sdk.execution_time.task_runner import run
+
+        success_task = PythonOperator(
+            task_id="init_task",
+            python_callable=lambda: "success",
+        )
+
+        runtime_ti = create_runtime_ti(task=success_task, dag_id="test_ti_finish_init")
+        context = runtime_ti.get_template_context()
+        log = mock.MagicMock()
+
+        with patch("airflow.sdk.execution_time.task_runner.Stats") as mock_stats:
+            state, _, error = run(runtime_ti, context, log)
+
+            assert state == TaskInstanceState.SUCCESS
+            assert error is None
+
+            expected_tags = {"dag_id": "test_ti_finish_init", "task_id": "init_task"}
+
+            # Verify ti.finish counters were initialized to 0 for all states
+            for task_state in TaskInstanceState:
+                mock_stats.incr.assert_any_call(
+                    f"ti.finish.test_ti_finish_init.init_task.{task_state.value}",
+                    count=0,
+                    tags=expected_tags,
+                )
+                mock_stats.incr.assert_any_call(
+                    "ti.finish",
+                    count=0,
+                    tags={**expected_tags, "state": task_state.value},
+                )
+
+            # Verify final ti.finish metric was emitted with actual state (success)
+            mock_stats.incr.assert_any_call(
+                f"ti.finish.test_ti_finish_init.init_task.{state.value}",
+                tags=expected_tags,
+            )
+            mock_stats.incr.assert_any_call(
+                "ti.finish",
+                tags={**expected_tags, "state": state.value},
+            )

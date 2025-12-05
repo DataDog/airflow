@@ -943,6 +943,23 @@ def run(
     state: TaskInstanceState
     error: BaseException | None = None
 
+    Stats.incr(f"ti.start.{ti.dag_id}.{ti.task_id}", tags={"dag_id": ti.dag_id, "task_id": ti.task_id})
+    Stats.incr("ti.start", tags={"dag_id": ti.dag_id, "task_id": ti.task_id})
+
+    # Initialize final state counters at zero such that we "touch" the metric with new point
+    # without incrementing incrementing it
+    for task_state in TaskInstanceState:
+        Stats.incr(
+            f"ti.finish.{ti.dag_id}.{ti.task_id}.{task_state.value}",
+            count=0,
+            tags={"dag_id": ti.dag_id, "task_id": ti.task_id},
+        )
+        Stats.incr(
+            "ti.finish",
+            count=0,
+            tags={"dag_id": ti.dag_id, "task_id": ti.task_id, "state": task_state.value},
+        )
+
     try:
         # First, clear the xcom data sent from server
         if ti._ti_context_from_server and (keys_to_delete := ti._ti_context_from_server.xcom_keys_to_clear):
@@ -1058,6 +1075,12 @@ def run(
     finally:
         if msg:
             SUPERVISOR_COMMS.send(msg=msg)
+
+        Stats.incr(
+            f"ti.finish.{ti.dag_id}.{ti.task_id}.{state.value}",
+            tags={"dag_id": ti.dag_id, "task_id": ti.task_id},
+        )
+        Stats.incr("ti.finish", tags={"dag_id": ti.dag_id, "task_id": ti.task_id, "state": state.value})
 
     # Return the message to make unit tests easier too
     ti.state = state
