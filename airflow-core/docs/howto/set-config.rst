@@ -196,3 +196,4 @@ Example settings you can configure this way:
 * :ref:`Customize your UI <customizing-the-ui>`
 * :ref:`Configure more variables to export <export_dynamic_environment_variables>`
 * :ref:`Customize your DB configuration <set-up-database-backend>`
+* :ref:`Customize database engine creation <set-up-database-backend:custom-engine-creation>`

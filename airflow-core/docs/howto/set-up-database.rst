@@ -359,6 +359,113 @@ For instance, you can specify a database schema where Airflow will create its re
 Note the ``search_path`` at the end of the ``SQL_ALCHEMY_CONN`` database URL.
 
 
+.. _set-up-database-backend:custom-engine-creation:
+
+Customizing Database Engine Creation
+-------------------------------------
+
+For advanced use cases, you can customize how Airflow creates the SQLAlchemy engine for its metadata
+database by defining a ``create_metadata_engine`` function in your ``airflow_local_settings.py`` file.
+
+This allows you to:
+
+* Add custom event listeners to the engine
+* Configure connection pooling beyond what's available in configuration
+* Implement custom connection retry logic
+* Add database-specific optimizations
+* Integrate custom authentication mechanisms (JWT tokens, IAM roles, etc.)
+
+See :ref:`Configuring local settings <set-config:configuring-local-settings>` for details on how to
+configure local settings.
+
+.. versionadded:: 3.2.0
+
+Basic Example
+~~~~~~~~~~~~~
+
+Create an ``airflow_local_settings.py`` file in your ``$AIRFLOW_HOME/config`` directory or in a location
+on your ``PYTHONPATH``:
+
+.. code-block:: python
+
+    from sqlalchemy import create_engine, event
+
+    def create_metadata_engine(sql_alchemy_conn, *, engine_args, connect_args):
+        """
+        Custom metadata database engine creation.
+
+        :param sql_alchemy_conn: Database connection string from configuration
+        :param engine_args: Engine arguments prepared by Airflow (includes pool settings)
+        :param connect_args: Connection arguments from configuration
+        :return: SQLAlchemy Engine instance
+        """
+        # Create engine with provided arguments
+        engine = create_engine(
+            sql_alchemy_conn,
+            connect_args=connect_args,
+            **engine_args,
+            future=True,
+        )
+
+        # Add custom event listener
+        @event.listens_for(engine, "connect")
+        def receive_connect(dbapi_conn, connection_record):
+            # Custom logic on each new connection
+            print(f"New connection established: {connection_record}")
+
+        return engine
+
+
+Advanced Example: Custom Authentication
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Integrate custom authentication mechanisms:
+
+.. code-block:: python
+
+    from sqlalchemy import create_engine, event
+    from my_auth_library import get_database_token
+
+    def create_metadata_engine(sql_alchemy_conn, *, engine_args, connect_args):
+        """Engine with custom JWT token authentication."""
+
+        engine = create_engine(
+            sql_alchemy_conn,
+            connect_args=connect_args,
+            **engine_args,
+            future=True,
+        )
+
+        # Inject fresh authentication token on each connection
+        @event.listens_for(engine, "do_connect")
+        def provide_token(dialect, conn_rec, cargs, cparams):
+            # Get fresh token
+            token = get_database_token()
+            cparams['password'] = token
+
+        return engine
+
+Important Notes
+~~~~~~~~~~~~~~~
+
+* The ``create_metadata_engine`` function receives the connection string and prepared arguments
+  from Airflow's configuration. You should typically pass these through to ``create_engine()``.
+
+* The ``engine_args`` parameter includes pool settings from Airflow configuration. You can
+  modify these but should understand the implications for Airflow's operation.
+
+* The ``connect_args`` parameter includes database-specific connection arguments. For SQLite,
+  this includes ``check_same_thread=False``.
+
+* You must return a valid SQLAlchemy ``Engine`` instance. Airflow will use this engine for all
+  MetaDB operations.
+
+.. seealso::
+
+    * `SQLAlchemy Engine Configuration <https://docs.sqlalchemy.org/en/20/core/engines.html>`_
+    * `SQLAlchemy Events <https://docs.sqlalchemy.org/en/20/core/events.html>`_
+
+
 Initialize the database
 -----------------------
 

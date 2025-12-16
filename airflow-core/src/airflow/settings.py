@@ -403,6 +403,65 @@ def _configure_async_session() -> None:
     )
 
 
+def create_metadata_engine(
+    sql_alchemy_conn: str,
+    *,
+    engine_args: dict[str, Any],
+    connect_args: dict[str, Any],
+) -> Engine:
+    """
+    Create the SQLAlchemy engine for Airflow's metadata database.
+
+    This function can be overridden in airflow_local_settings.py to customize
+    engine creation for the metadata database. This enables organizations to
+    integrate custom authentication (JWT, IAM, certificates), connection pooling,
+    or other database connection customizations.
+
+    The function is called by configure_orm() when initializing the metadata
+    database connection. Users can override it in airflow_local_settings.py to
+    return a custom engine while preserving all other Airflow functionality.
+
+    :param sql_alchemy_conn: Database connection string from configuration
+    :param engine_args: Dictionary of SQLAlchemy engine arguments (includes pool_size, etc.)
+    :param connect_args: Dictionary of connection arguments (e.g., check_same_thread for SQLite)
+    :return: SQLAlchemy Engine instance for the metadata database
+
+    Example:
+        Override in airflow_local_settings.py::
+
+            from sqlalchemy import create_engine, event
+
+            def create_metadata_engine(sql_alchemy_conn, *, engine_args, connect_args):
+                # Custom engine creation logic
+                engine = create_engine(
+                    sql_alchemy_conn,
+                    connect_args=connect_args,
+                    **engine_args,
+                    future=True,
+                )
+
+                @event.listens_for(engine, "connect")
+                def receive_connect(dbapi_conn, connection_record):
+                    # Custom connection setup
+                    pass
+
+                return engine
+
+    .. seealso::
+        For more information on customizing engine creation, see
+        :ref:`Customizing Database Engine Creation <set-up-database-backend:custom-engine-creation>`
+
+    .. versionadded:: 3.2.0
+    """
+    log.debug("Creating metadata database engine with URL: %s", sql_alchemy_conn)
+    return create_engine(
+        sql_alchemy_conn,
+        connect_args=connect_args,
+        **engine_args,
+        future=True,
+    )
+
+
 def configure_orm(disable_connection_pool=False, pool_class=None):
     """Configure ORM using SQLAlchemy."""
     from airflow._shared.secrets_masker import mask_secret
@@ -434,11 +493,11 @@ def configure_orm(disable_connection_pool=False, pool_class=None):
         # to so the `test` thread and the tested endpoints can use common objects.
         connect_args["check_same_thread"] = False
 
-    engine = create_engine(
+    # Use create_metadata_engine extension point to allow customization
+    engine = create_metadata_engine(
         SQL_ALCHEMY_CONN,
+        engine_args=engine_args,
         connect_args=connect_args,
-        **engine_args,
-        future=True,
     )
     _configure_async_session()
     mask_secret(engine.url.password)
