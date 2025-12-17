@@ -375,6 +375,85 @@ def _get_connect_args(mode: Literal["sync", "async"]) -> Any:
     return {}
 
 
+def create_metadata_engine(
+    sql_alchemy_conn: str,
+    *,
+    engine_args: dict[str, Any],
+    connect_args: dict[str, Any],
+) -> Engine:
+    """
+    Create the SQLAlchemy Engine for the Airflow metadata database.
+
+    This function can be overridden in ``airflow_local_settings.py`` to customize
+    engine creation, for example to add connection event handlers for JWT-based
+    authentication or other custom connection handling.
+
+    Example override in airflow_local_settings.py::
+
+        from sqlalchemy import create_engine, event
+
+        def create_metadata_engine(sql_alchemy_conn, *, engine_args, connect_args):
+            engine = create_engine(
+                sql_alchemy_conn,
+                connect_args=connect_args,
+                **engine_args,
+                future=True,
+            )
+            # Register custom event handler for JWT injection
+            event.listen(engine, "do_connect", my_jwt_injector)
+            return engine
+
+    :param sql_alchemy_conn: The SQLAlchemy connection string
+    :param engine_args: Engine configuration arguments (pool settings, etc.)
+    :param connect_args: Connection arguments passed to the underlying DBAPI
+    :return: SQLAlchemy Engine instance
+    """
+    return create_engine(
+        sql_alchemy_conn,
+        connect_args=connect_args,
+        **engine_args,
+        future=True,
+    )
+
+
+def create_async_metadata_engine(
+    sql_alchemy_conn_async: str,
+    *,
+    connect_args: dict[str, Any],
+) -> AsyncEngine:
+    """
+    Create the async SQLAlchemy Engine for the Airflow metadata database.
+
+    This function can be overridden in ``airflow_local_settings.py`` to customize
+    async engine creation, for example to add connection event handlers.
+
+    Note: For JWT injection or similar do_connect handlers, register on the
+    underlying sync_engine::
+
+        from sqlalchemy.ext.asyncio import create_async_engine
+        from sqlalchemy import event
+
+        def create_async_metadata_engine(sql_alchemy_conn_async, *, connect_args):
+            engine = create_async_engine(
+                sql_alchemy_conn_async,
+                connect_args=connect_args,
+                future=True,
+            )
+            # Register on sync_engine for do_connect events
+            event.listen(engine.sync_engine, "do_connect", my_jwt_injector)
+            return engine
+
+    :param sql_alchemy_conn_async: The async SQLAlchemy connection string
+    :param connect_args: Connection arguments passed to the underlying DBAPI
+    :return: AsyncEngine instance
+    """
+    return create_async_engine(
+        sql_alchemy_conn_async,
+        connect_args=connect_args,
+        future=True,
+    )
+
+
 def _configure_async_session() -> None:
     """
     Configure async SQLAlchemy session.
@@ -390,10 +469,9 @@ def _configure_async_session() -> None:
         AsyncSession = None
         return
 
-    async_engine = create_async_engine(
+    async_engine = create_async_metadata_engine(
         SQL_ALCHEMY_CONN_ASYNC,
         connect_args=_get_connect_args("async"),
-        future=True,
     )
     AsyncSession = async_sessionmaker(
         bind=async_engine,
@@ -434,11 +512,10 @@ def configure_orm(disable_connection_pool=False, pool_class=None):
         # to so the `test` thread and the tested endpoints can use common objects.
         connect_args["check_same_thread"] = False
 
-    engine = create_engine(
+    engine = create_metadata_engine(
         SQL_ALCHEMY_CONN,
+        engine_args=engine_args,
         connect_args=connect_args,
-        **engine_args,
-        future=True,
     )
     _configure_async_session()
     mask_secret(engine.url.password)
