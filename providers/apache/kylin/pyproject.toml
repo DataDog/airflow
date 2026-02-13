@@ -60,7 +60,7 @@ requires-python = ">=3.10"
 dependencies = [
     "apache-airflow>=2.11.0",
     "apache-airflow-providers-common-compat>=1.10.1",
-    "kylinpy>2.7.0",
+    "kylinpy>2.8.4",
 ]
 
 [dependency-groups]
