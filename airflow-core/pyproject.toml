@@ -66,7 +66,7 @@ classifiers = [
 version = "3.2.0"
 
 dependencies = [
-    "a2wsgi>=1.10.8",
+    "a2wsgi>=1.10.10",
     # aiosqlite 0.22.0 has a problem with hanging pytest sessions and we excluded it
     # See https://github.com/omnilib/aiosqlite/issues/369
     # It seems that while our test issues are fixed in 0.22.1, sqlalchemy 2 itself
@@ -78,34 +78,34 @@ dependencies = [
     # together with SQLAlchemy. Our experience with Alembic is that it very stable in minor version
     # The 1.13.0 of alembic marked some migration code as SQLAlchemy 2+ only so we limit it to 1.13.1
     "alembic>=1.13.1, <2.0",
-    "argcomplete>=1.10",
-    "asgiref>=2.3.0",
+    "argcomplete>=1.10.3",
+    "asgiref>=2.3.2",
     "attrs>=22.1.0, !=25.2.0",
     "cadwyn>=6.0.0",
-    "colorlog>=6.8.2",
-    "cron-descriptor>=1.2.24",
-    "croniter>=2.0.2",
+    "colorlog>=6.10.1",
+    "cron-descriptor>=1.2.35",
+    "croniter>=2.0.7",
     # TODO(potiuk): We should bump cryptography to >=46.0.0 when sqlalchemy>=2.0 is required
     "cryptography>=41.0.0,<46.0.0",
-    "deprecated>=1.2.13",
+    "deprecated>=1.2.18",
     "dill>=0.2.2",
-    "fastapi[standard-no-fastapi-cloud-cli]>=0.128.0",
+    "fastapi[standard-no-fastapi-cloud-cli]>=0.128.3",
     "uvicorn>=0.37.0",
     "starlette>=0.45.0",
-    "httpx>=0.25.0",
+    "httpx>=0.25.2",
     'importlib_metadata>=6.5;python_version<"3.12"',
     'importlib_metadata>=7.0;python_version>="3.12"',
-    "itsdangerous>=2.0",
-    "jinja2>=3.1.5",
-    "jsonschema>=4.19.1",
-    "lazy-object-proxy>=1.2.0",
+    "itsdangerous>=2.0.1",
+    "jinja2>=3.1.6",
+    "jsonschema>=4.19.2",
+    "lazy-object-proxy>=1.2.2",
     'libcst >=1.8.2',
-    "linkify-it-py>=2.0.0",
+    "linkify-it-py>=2.0.3",
     "lockfile>=0.12.2",
     "methodtools>=0.4.7",
     "natsort>=8.4.0",
-    "opentelemetry-api>=1.27.0",
-    "opentelemetry-exporter-otlp>=1.27.0",
+    "opentelemetry-api>=1.39.1",
+    "opentelemetry-exporter-otlp>=1.39.1",
     # opentelemetry-proto is a transitive dependency of
     # opentelemetry-exporter-otlp and other OpenTelemetry packages.
     # opentelemetry-proto adds a very restrictive dependency on
@@ -119,50 +119,50 @@ dependencies = [
     "packaging>=25.0",
     "pathspec>=0.9.0",
     'pendulum>=3.1.0',
-    "pluggy>=1.5.0",
-    "psutil>=5.8.0",
-    "pydantic>=2.11.0",
+    "pluggy>=1.6.0",
+    "psutil>=5.9.8",
+    "pydantic>=2.11.10",
     # Pygments 2.19.0 improperly renders .ini files with dictionaries as values
     # See https://github.com/pygments/pygments/issues/2834
-    "pygments>=2.0.1,!=2.19.0",
-    "pyjwt>=2.10.0",
-    "python-daemon>=3.0.0",
-    "python-dateutil>=2.7.0",
-    "python-slugify>=5.0",
+    "pygments>=2.19.2",
+    "pyjwt>=2.10.1",
+    "python-daemon>=3.0.2",
+    "python-dateutil>=2.7.5",
+    "python-slugify>=5.0.2",
     # Requests 3 if it will be released, will be heavily breaking.
-    "requests>=2.32.0,<3",
-    "rich-argparse>=1.0.0",
-    "rich>=13.6.0",
-    "setproctitle>=1.3.3",
+    "requests>=2.32.5",
+    "rich-argparse>=1.7.2",
+    "rich>=13.9.4",
+    "setproctitle>=1.3.7",
     # SQLAlchemy >=2.0.36 fixes Python 3.13 TypingOnly import AssertionError caused by new typing attributes (__static_attributes__, __firstlineno__)
-    "sqlalchemy[asyncio]>=2.0.36",
-    "sqlalchemy-jsonfield>=1.0",
+    "sqlalchemy[asyncio]>=2.0.46",
+    "sqlalchemy-jsonfield>=1.0.2",
     "sqlalchemy-utils>=0.41.2",
     "svcs>=25.1.0",
     "tabulate>=0.9.0",
-    "tenacity>=8.3.0",
-    "termcolor>=3.0.0",
-    "typing-extensions>=4.14.1",
+    "tenacity>=8.5.0",
+    "termcolor>=3.0.1",
+    "typing-extensions>=4.15.0",
     # https://github.com/apache/airflow/issues/56369 , rework universal-pathlib usage
     "universal-pathlib>=0.2.6,<0.3.0",
     "uuid6>=2024.7.10",
     "apache-airflow-task-sdk<1.3.0,>=1.2.0",
     # pre-installed providers
-    "apache-airflow-providers-common-compat>=1.7.4",
-    "apache-airflow-providers-common-io>=1.6.3",
-    "apache-airflow-providers-common-sql>=1.28.1",
-    "apache-airflow-providers-smtp>=2.3.1",
-    "apache-airflow-providers-standard>=1.9.0",
+    "apache-airflow-providers-common-compat>=1.10.1",
+    "apache-airflow-providers-common-io>=1.6.4",
+    "apache-airflow-providers-common-sql>=1.28.2",
+    "apache-airflow-providers-smtp>=2.4.1",
+    "apache-airflow-providers-standard>=1.9.1",
     # Start of shared logging dependencies
     "msgspec>=0.19.0",
     "pygtrie>=2.5.0",
-    "structlog>=25.4.0",
+    "structlog>=25.5.0",
     # End of shared logging dependencies
     # Start of shared configuration dependencies
     "pyyaml>=6.0.3",
     # End of shared configuration dependencies
     # Start of shared listeners dependencies
-    "pluggy>=1.5.0",
+    "pluggy>=1.6.0",
     # End of shared listeners dependencies
 ]
 
@@ -170,23 +170,23 @@ dependencies = [
 [project.optional-dependencies]
 "async" = [
     "eventlet>=0.37.0",
-    "gevent>=25.4.1",
-    "greenlet>=3.1.0",
+    "gevent>=25.4.2",
+    "greenlet>=3.1.1",
     "greenback>=1.2.1",
 ]
 "graphviz" = [
     # The graphviz package creates friction when installing on MacOS as it needs graphviz system package to
     # be installed, and it's really only used for very obscure features of Airflow, so we can skip it on MacOS
     # Instead, if someone attempts to use it on MacOS, they will get explanatory error on how to install it
-    "graphviz>=0.20; sys_platform != 'darwin'",
+    "graphviz>=0.20.3; sys_platform != 'darwin'",
 ]
 "kerberos"  = [
-    "pykerberos>=1.1.13",
+    "pykerberos>=1.1.14",
     "requests-kerberos>=0.14.0",
-    "thrift-sasl>=0.4.2",
+    "thrift-sasl>=0.4.3",
 ]
 "memray" = [
-    "memray>=1.19.0",
+    "memray>=1.19.1",
 ]
 "otel" = [
     "opentelemetry-exporter-prometheus>=0.47b0",
