@@ -26,7 +26,7 @@ description = "Performance testing utilities and DAGs for Apache Airflow"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = "Apache-2.0"
 dependencies = [
-    "apache-airflow>=3.1.3",
+    "apache-airflow>=3.2.0",
 ]
 authors = [
     { name = "Apache Software Foundation", email = "dev@airflow.apache.org" },
