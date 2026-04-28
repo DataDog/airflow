@@ -62,17 +62,17 @@ dependencies = [
     # Provider's manager had a missing support for common.messaging provider's discovery before Airflow 3.0.1
     # The new common.messaging provider is not compatible with Airflow 3.0.0, and Airflow has to be
     # Upgraded to 3.0.1+ to use the new provider.
-    "apache-airflow>=3.0.1",
+    "apache-airflow>=3.2.0",
 ]
 
 # The optional dependencies should be modified in place in the generated file
 # Any change in the dependencies is preserved when the file is regenerated
 [project.optional-dependencies]
 "amazon" = [
-    "apache-airflow-providers-amazon>=9.7.0"
+    "apache-airflow-providers-amazon>=9.23.0"
 ]
 "apache.kafka" = [
-    "apache-airflow-providers-apache-kafka>=1.9.0"
+    "apache-airflow-providers-apache-kafka>=1.10.0"
 ]
 
 [dependency-groups]

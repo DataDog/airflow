@@ -66,10 +66,10 @@ requires-python = ">=3.10"
 # Make sure to run ``prek update-providers-dependencies --all-files``
 # After you modify the dependencies, and rebuild your Breeze CI image with ``breeze ci-image build``
 dependencies = [
-    "apache-airflow>=3.0.0",
-    "apache-airflow-providers-common-compat>=1.14.1",
-    "apache-airflow-providers-standard>=1.12.1",
-    "pydantic-ai-slim>=1.34.0",
+    "apache-airflow>=3.2.0",
+    "apache-airflow-providers-common-compat>=1.14.2",
+    "apache-airflow-providers-standard>=1.12.2",
+    "pydantic-ai-slim>=1.84.1",
 ]
 
 # The optional dependencies should be modified in place in the generated file
