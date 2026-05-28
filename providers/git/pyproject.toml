@@ -59,9 +59,9 @@ requires-python = ">=3.10"
 # Make sure to run ``prek update-providers-dependencies --all-files``
 # After you modify the dependencies, and rebuild your Breeze CI image with ``breeze ci-image build``
 dependencies = [
-    "apache-airflow>=3.0.0",
+    "apache-airflow>=3.2.0",
     "apache-airflow-providers-common-compat>=1.15.0",
-    "GitPython>=3.1.44",
+    "GitPython>=3.1.46",
 ]
 
 [dependency-groups]
