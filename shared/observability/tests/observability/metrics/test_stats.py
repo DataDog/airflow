@@ -259,6 +259,26 @@ class TestDogStats:
             metric="empty", sample_rate=1, value=1, tags=[]
         )
 
+    def test_key_value_tag_emitted_with_colon(self):
+        dogstatsd = SafeDogStatsdLogger(self.dogstatsd_client, metrics_tags=True)
+        dogstatsd.incr("my_metric", tags={"env": "prod"})
+        self.dogstatsd_client.increment.assert_called_once_with(
+            metric="my_metric", sample_rate=1, value=1, tags=["env:prod"]
+        )
+
+    def test_standalone_tag_none_value_emitted_without_colon(self):
+        dogstatsd = SafeDogStatsdLogger(self.dogstatsd_client, metrics_tags=True)
+        dogstatsd.incr("my_metric", tags={"production": None})
+        self.dogstatsd_client.increment.assert_called_once_with(
+            metric="my_metric", sample_rate=1, value=1, tags=["production"]
+        )
+
+    def test_mixed_tags_standalone_and_key_value(self):
+        dogstatsd = SafeDogStatsdLogger(self.dogstatsd_client, metrics_tags=True)
+        dogstatsd.incr("my_metric", tags={"production": None, "env": "staging"})
+        call_kwargs = self.dogstatsd_client.increment.call_args
+        assert set(call_kwargs.kwargs["tags"]) == {"production", "env:staging"}
+
 
 class TestStatsAllowAndBlockLists:
     @pytest.mark.parametrize(
@@ -474,6 +494,12 @@ class TestStatsWithInfluxDBEnabled:
             tags={"key0,": "val0", "key1": "val1", "key2": "val2", "key3": "val3"},
         )
         self.statsd_client.incr.assert_called_once_with("test_stats_run.delay,key1=val1", 1, 1)
+
+    def test_standalone_tag_none_value_emitted_as_true(self):
+        self.stats.incr("test_stats_run.delay", tags={"production": None, "key1": "val1"})
+        self.statsd_client.incr.assert_called_once_with(
+            "test_stats_run.delay,production=true,key1=val1", 1, 1
+        )
 
 
 def always_invalid(stat_name):

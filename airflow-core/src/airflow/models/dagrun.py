@@ -499,9 +499,30 @@ class DagRun(Base, LoggingMixin):
         )
         return session.scalar(select_stmt)
 
+    def _dag_tags_for_stats(self) -> dict[str, str | None]:
+        """Convert dag tags to metric tags. Tags with ':' become key:value; others are standalone (None value)."""
+        try:
+            if not self.dag_model or not self.dag_model.tags:
+                return {}
+            result: dict[str, str | None] = {}
+            for tag in self.dag_model.tags:
+                if ":" in tag.name:
+                    key, _, value = tag.name.partition(":")
+                    result[key] = value
+                else:
+                    result[tag.name] = None
+            return result
+        except Exception:
+            return {}
+
     @property
-    def stats_tags(self) -> dict[str, str]:
-        return prune_dict({"dag_id": self.dag_id, "run_type": self.run_type})
+    def stats_tags(self) -> dict[str, str | None]:
+        # prune_dict strips None values, so merge dag tags after it runs so standalone
+        # tags (None value) are preserved for DogStatsD emission.
+        base = prune_dict({"dag_id": self.dag_id, "run_type": self.run_type})
+        dag_tags = self._dag_tags_for_stats()
+        # Built-in keys win on collision; dag tags fill in everything else.
+        return {**dag_tags, **base}
 
     def get_state(self):
         return self._state

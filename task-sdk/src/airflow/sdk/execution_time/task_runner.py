@@ -1393,6 +1393,28 @@ def _await_input_task(
     return msg, state
 
 
+def _dag_tags_for_stats(ti: RuntimeTaskInstance) -> dict[str, str | None]:
+    """
+    Return Dag tags as metric tags, read from the in-memory Dag (no DB access).
+
+    Tags containing ``:`` (e.g. ``env:prod``) become a ``key:value`` pair; plain
+    tags become standalone (``None`` value). Returns ``{}`` on any error so metric
+    emission never breaks.
+    """
+    try:
+        dag = getattr(ti.task, "dag", None)
+        result: dict[str, str | None] = {}
+        for name in getattr(dag, "tags", None) or ():
+            if ":" in name:
+                key, _, value = name.partition(":")
+                result[key] = value
+            else:
+                result[name] = None
+        return result
+    except Exception:
+        return {}
+
+
 @Sentry.enrich_errors
 @detail_span("run")
 def run(
@@ -1434,7 +1456,7 @@ def run(
     state: TaskInstanceState | None = None
     error: BaseException | None = None
 
-    stats_tags = {"dag_id": ti.dag_id, "task_id": ti.task_id}
+    stats_tags = {**_dag_tags_for_stats(ti), "dag_id": ti.dag_id, "task_id": ti.task_id}
     stats.incr("ti.start", tags=stats_tags)
 
     try:
@@ -1613,7 +1635,7 @@ def _handle_current_task_success(
 
     # Record operator and task instance success metrics
     operator = ti.task.__class__.__name__
-    stats_tags = {"dag_id": ti.dag_id, "task_id": ti.task_id}
+    stats_tags = {**_dag_tags_for_stats(ti), "dag_id": ti.dag_id, "task_id": ti.task_id}
 
     stats.incr("operator_successes", tags={**stats_tags, "operator_name": operator})
     stats.incr("ti_successes", tags=stats_tags)
@@ -1712,7 +1734,7 @@ def _handle_current_task_failed(
 
     # Record operator and task instance failed metrics
     operator = ti.task.__class__.__name__
-    stats_tags = {"dag_id": ti.dag_id, "task_id": ti.task_id}
+    stats_tags = {**_dag_tags_for_stats(ti), "dag_id": ti.dag_id, "task_id": ti.task_id}
 
     stats.incr("operator_failures", tags={**stats_tags, "operator_name": operator})
     stats.incr("ti_failures", tags=stats_tags)
@@ -2073,7 +2095,7 @@ def finalize(
     # Record task duration metrics for all terminal states
     if ti.start_date and ti.end_date:
         duration_ms = (ti.end_date - ti.start_date).total_seconds() * 1000
-        stats_tags = {"dag_id": ti.dag_id, "task_id": ti.task_id}
+        stats_tags = {**_dag_tags_for_stats(ti), "dag_id": ti.dag_id, "task_id": ti.task_id}
 
         stats.timing("task.duration", duration_ms, tags=stats_tags)
 

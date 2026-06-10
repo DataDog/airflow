@@ -5813,3 +5813,30 @@ class TestRegisterDeserializationAllowedClasses:
         with patch("airflow.sdk.execution_time.task_runner.allow_class", side_effect=ValueError("nope")):
             # Must not raise -- the walk swallows per-class registration errors.
             _register_deserialization_allowed_classes(dag, structlog.get_logger())
+
+
+class TestDagTagsForStats:
+    """Tests for `_dag_tags_for_stats`: Dag tags -> metric tags, read from the in-memory Dag."""
+
+    def _make_ti(self, create_runtime_ti, tags):
+        from airflow.sdk import DAG
+        from airflow.sdk.bases.operator import BaseOperator
+
+        class _NoopOperator(BaseOperator):
+            def execute(self, context):
+                return None
+
+        with DAG("tagged_dag", tags=tags):
+            task = _NoopOperator(task_id="t")
+        return create_runtime_ti(task=task)
+
+    def test_no_tags(self, create_runtime_ti):
+        from airflow.sdk.execution_time.task_runner import _dag_tags_for_stats
+
+        assert _dag_tags_for_stats(self._make_ti(create_runtime_ti, [])) == {}
+
+    def test_standalone_and_key_value_tags(self, create_runtime_ti):
+        from airflow.sdk.execution_time.task_runner import _dag_tags_for_stats
+
+        ti = self._make_ti(create_runtime_ti, ["env:prod", "validation"])
+        assert _dag_tags_for_stats(ti) == {"env": "prod", "validation": None}

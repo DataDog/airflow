@@ -730,9 +730,27 @@ class TaskInstance(Base, LoggingMixin, BaseWorkload):
         return hash((self.task_id, self.dag_id, self.run_id, self.map_index))
 
     @property
-    def stats_tags(self) -> dict[str, str]:
+    def stats_tags(self) -> dict[str, str | None]:
         """Returns task instance tags."""
-        return prune_dict({"dag_id": self.dag_id, "task_id": self.task_id})
+        from sqlalchemy import inspect as sa_inspect
+
+        tags: dict[str, str | None] = {}
+        try:
+            dr = self.dag_run  # lazy="joined" — always in memory when TI is loaded
+            if dr is not None and "dag_model" not in sa_inspect(dr).unloaded:
+                dm = dr.dag_model
+                if dm is not None and "tags" not in sa_inspect(dm).unloaded and dm.tags:
+                    for tag in dm.tags:
+                        if ":" in tag.name:
+                            key, _, value = tag.name.partition(":")
+                            tags[key] = value
+                        else:
+                            tags[tag.name] = None
+        except Exception:
+            pass
+        # Built-in keys always win on collision.
+        tags.update(prune_dict({"dag_id": self.dag_id, "task_id": self.task_id}))
+        return tags
 
     @staticmethod
     def insert_mapping(

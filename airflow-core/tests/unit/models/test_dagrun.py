@@ -4108,3 +4108,40 @@ class TestDagRunTracing:
 
         span = trace.get_current_span(ctx)
         assert get_task_span_detail_level(span) == 2
+
+
+class TestDagRunStatsTags:
+    def test_stats_tags_without_dag_tags(self, dag_maker, session):
+        with dag_maker("no_tags_dag", session=session):
+            pass
+        dr = dag_maker.create_dagrun()
+        _ = dr.dag_model.tags
+        tags = dr.stats_tags
+        assert tags["dag_id"] == "no_tags_dag"
+        assert tags["run_type"] == dr.run_type
+
+    def test_stats_tags_with_standalone_dag_tag(self, dag_maker, session):
+        with dag_maker("standalone_tag_dag", tags=["production"], session=session):
+            pass
+        dr = dag_maker.create_dagrun()
+        # Eagerly load the relationship so _dag_tags_for_stats can see the tags.
+        _ = dr.dag_model.tags
+        tags = dr.stats_tags
+        assert tags["dag_id"] == "standalone_tag_dag"
+        assert tags["production"] is None
+
+    def test_stats_tags_with_key_value_dag_tag(self, dag_maker, session):
+        with dag_maker("kv_tag_dag", tags=["env:staging"], session=session):
+            pass
+        dr = dag_maker.create_dagrun()
+        _ = dr.dag_model.tags
+        tags = dr.stats_tags
+        assert tags["env"] == "staging"
+
+    def test_stats_tags_builtin_keys_win_on_collision(self, dag_maker, session):
+        with dag_maker("collision_dag", tags=["dag_id:sneaky"], session=session):
+            pass
+        dr = dag_maker.create_dagrun()
+        _ = dr.dag_model.tags
+        tags = dr.stats_tags
+        assert tags["dag_id"] == "collision_dag"

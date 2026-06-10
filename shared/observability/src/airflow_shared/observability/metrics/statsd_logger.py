@@ -46,14 +46,15 @@ def prepare_stat_with_tags(fn: T) -> T:
 
     @wraps(fn)
     def wrapper(
-        self, stat: str | None = None, *args, tags: dict[str, str] | None = None, **kwargs
+        self, stat: str | None = None, *args, tags: dict[str, str | None] | None = None, **kwargs
     ) -> Callable[[str], str]:
         if self.influxdb_tags_enabled:
             if stat is not None and tags is not None:
                 for k, v in tags.items():
                     if self.metric_tags_validator.test(k):
-                        if all(c not in [",", "="] for c in f"{v}{k}"):
-                            stat += f",{k}={v}"
+                        v_str = "true" if v is None else v
+                        if all(c not in [",", "="] for c in f"{v_str}{k}"):
+                            stat += f",{k}={v_str}"
                         else:
                             log.error("Dropping invalid tag: %s=%s.", k, v)
         return fn(self, stat, *args, tags=tags, **kwargs)
@@ -88,7 +89,7 @@ class SafeStatsdLogger:
         count: int = 1,
         rate: float = 1,
         *,
-        tags: dict[str, str] | None = None,
+        tags: dict[str, str | None] | None = None,
     ) -> None:
         """Increment stat."""
         if self.metrics_validator.test(stat):
@@ -103,7 +104,7 @@ class SafeStatsdLogger:
         count: int = 1,
         rate: float = 1,
         *,
-        tags: dict[str, str] | None = None,
+        tags: dict[str, str | None] | None = None,
     ) -> None:
         """Decrement stat."""
         if self.metrics_validator.test(stat):
@@ -119,7 +120,7 @@ class SafeStatsdLogger:
         rate: float = 1,
         delta: bool = False,
         *,
-        tags: dict[str, str] | None = None,
+        tags: dict[str, str | None] | None = None,
     ) -> None:
         """Gauge stat."""
         if self.metrics_validator.test(stat):
@@ -133,7 +134,7 @@ class SafeStatsdLogger:
         stat: str,
         dt: DeltaType,
         *,
-        tags: dict[str, str] | None = None,
+        tags: dict[str, str | None] | None = None,
     ) -> None:
         """Stats timing."""
         if self.metrics_validator.test(stat):
@@ -146,7 +147,7 @@ class SafeStatsdLogger:
         self,
         stat: str | None = None,
         *args,
-        tags: dict[str, str] | None = None,
+        tags: dict[str, str | None] | None = None,
         **kwargs,
     ) -> Timer:
         """Timer metric that can be cancelled."""
