@@ -66,12 +66,12 @@ requires-python = ">=3.10"
 # Make sure to run ``prek update-providers-dependencies --all-files``
 # After you modify the dependencies, and rebuild your Breeze CI image with ``breeze ci-image build``
 dependencies = [
-    "apache-airflow>=3.0.2",
+    "apache-airflow>=3.2.2",
     "apache-airflow-providers-common-compat>=1.12.0",
     # Blinker use for signals in Flask, this is an optional dependency in Flask 2.2 and lower.
     # In Flask 2.3 it becomes a mandatory dependency, and flask signals are always available.
     "blinker>=1.6.2",
-    "flask>=2.2.1",
+    "flask>=2.2.5",
     # We are tightly coupled with FAB version as we vendored-in part of FAB code related to security manager
     # This is done as part of preparation to removing FAB as dependency, but we are not ready for it yet
     # Every time we update FAB version here, please make sure that you review the classes and models in
@@ -83,7 +83,7 @@ dependencies = [
     # (the compat-3.0.6 matrix job) whose own pyjwt floor predates `jwt.types.Options`
     # (added in PyJWT 2.11.0). Without this, `from jwt.types import Options` in
     # `flask_jwt_extended.tokens` raises ImportError at module import time.
-    "pyjwt>=2.11.0",
+    "pyjwt>=2.13.0",
     "flask-login>=0.6.2; python_version < '3.14'",
     "flask-login>=0.6.3; python_version >= '3.14'",
     "flask-session>=0.8.0",
@@ -112,7 +112,7 @@ dependencies = [
     # and JWT validation (authlib.jose.JsonWebKey / authlib.jose.jwt).
     # flask-appbuilder ships authlib as its own optional [oauth] extra; we expose it
     # here so that ``pip install apache-airflow-providers-fab[oauth]`` pulls it in.
-    "authlib>=1.0.0",
+    "authlib>=1.7.2",
 ]
 
 [dependency-groups]
@@ -124,7 +124,7 @@ dev = [
     # Additional devel dependencies (do not remove this line and add extra development dependencies)
     "kerberos>=1.3.0",
     "requests_kerberos>=0.14.0",
-    "authlib>=1.0.0",
+    "authlib>=1.7.2",
 ]
 
 # To build docs:
