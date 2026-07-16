@@ -33,7 +33,7 @@ from airflow.sdk.execution_time.comms import (
     XComSequenceIndexResult,
     XComSequenceSliceResult,
 )
-from airflow.sdk.execution_time.lazy_sequence import LazyXComSequence
+from airflow.sdk.execution_time.lazy_sequence import _ITER_CHUNK_SIZE, LazyXComSequence
 from airflow.sdk.execution_time.xcom import resolve_xcom_backend
 
 from tests_common.test_utils.config import conf_vars
@@ -74,26 +74,58 @@ def test_len(mock_supervisor_comms, lazy_sequence):
 
 
 def test_iter(mock_supervisor_comms, lazy_sequence):
+    """Forward iteration fetches items in batches via the slice endpoint, not one-by-one."""
     it = iter(lazy_sequence)
 
     mock_supervisor_comms.send.side_effect = [
-        XComSequenceIndexResult(root="f"),
-        ErrorResponse(error=ErrorType.XCOM_NOT_FOUND, detail={"oops": "sorry!"}),
+        XComSequenceSliceResult(root=["f"]),
+        XComSequenceSliceResult(root=[]),
     ]
     assert list(it) == ["f"]
     mock_supervisor_comms.send.assert_has_calls(
         [
             call(
-                msg=GetXComSequenceItem(
+                GetXComSequenceSlice(
                     key=BaseXCom.XCOM_RETURN_KEY,
                     dag_id="dag",
                     task_id="task",
                     run_id="run",
-                    offset=0,
+                    start=0,
+                    stop=_ITER_CHUNK_SIZE,
+                    step=None,
                 ),
             ),
             call(
-                msg=GetXComSequenceItem(
+                GetXComSequenceSlice(
+                    key=BaseXCom.XCOM_RETURN_KEY,
+                    dag_id="dag",
+                    task_id="task",
+                    run_id="run",
+                    start=1,
+                    stop=1 + _ITER_CHUNK_SIZE,
+                    step=None,
+                ),
+            ),
+        ]
+    )
+
+
+def test_iter_backward_still_uses_per_item_lookup(mock_supervisor_comms, lazy_sequence):
+    """Backward iteration (dir=-1) keeps the original per-item lookup, unaffected by batching."""
+    from airflow.sdk.execution_time.lazy_sequence import LazyXComIterator
+
+    it = LazyXComIterator(seq=lazy_sequence, index=1, dir=-1)
+
+    mock_supervisor_comms.send.side_effect = [
+        XComSequenceIndexResult(root="b"),
+        XComSequenceIndexResult(root="a"),
+        ErrorResponse(error=ErrorType.XCOM_NOT_FOUND, detail={"oops": "sorry!"}),
+    ]
+    assert list(it) == ["b", "a"]
+    mock_supervisor_comms.send.assert_has_calls(
+        [
+            call(
+                GetXComSequenceItem(
                     key=BaseXCom.XCOM_RETURN_KEY,
                     dag_id="dag",
                     task_id="task",
@@ -101,8 +133,28 @@ def test_iter(mock_supervisor_comms, lazy_sequence):
                     offset=1,
                 ),
             ),
+            call(
+                GetXComSequenceItem(
+                    key=BaseXCom.XCOM_RETURN_KEY,
+                    dag_id="dag",
+                    task_id="task",
+                    run_id="run",
+                    offset=0,
+                ),
+            ),
         ]
     )
+
+
+def test_iter_preserves_falsy_values(mock_supervisor_comms, lazy_sequence):
+    """A falsy-but-real item (0, "", False, None) must not be mistaken for an empty/exhausted buffer."""
+    it = iter(lazy_sequence)
+
+    mock_supervisor_comms.send.side_effect = [
+        XComSequenceSliceResult(root=[0, "", False, None, "last"]),
+        XComSequenceSliceResult(root=[]),
+    ]
+    assert list(it) == [0, "", False, None, "last"]
 
 
 def test_getitem_index(mock_supervisor_comms, lazy_sequence):

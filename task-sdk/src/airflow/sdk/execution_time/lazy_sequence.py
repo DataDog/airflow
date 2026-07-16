@@ -38,21 +38,42 @@ _XComWrapper = collections.namedtuple("_XComWrapper", "value")
 
 log = structlog.get_logger(logger_name=__name__)
 
+# Forward iteration fetches items in chunks via the slice endpoint instead of
+# one HTTP request per item, to avoid an N+1 sequential-call pattern when a
+# task iterates a mapped upstream task's full XCom output.
+_ITER_CHUNK_SIZE = 50
+
 
 @attrs.define
 class LazyXComIterator(Iterator[T]):
     seq: LazyXComSequence[T]
     index: int = 0
     dir: Literal[1, -1] = 1
+    _buffer: list[T] = attrs.field(init=False, factory=list)
+    _buffer_start: int = attrs.field(init=False, default=0)
 
     def __next__(self) -> T:
         if self.index < 0:
             # When iterating backwards, avoid extra HTTP request
             raise StopIteration()
-        try:
-            val = self.seq[self.index]
-        except IndexError:
-            raise StopIteration from None
+        if self.dir != 1:
+            # Backward iteration is rare and not worth batching; keep the
+            # original per-item lookup for it.
+            try:
+                val = self.seq[self.index]
+            except IndexError:
+                raise StopIteration from None
+            self.index += self.dir
+            return val
+
+        if not self._buffer or self.index >= self._buffer_start + len(self._buffer):
+            self._buffer_start = self.index
+            self._buffer = list(self.seq[self.index : self.index + _ITER_CHUNK_SIZE])
+
+        offset = self.index - self._buffer_start
+        if offset >= len(self._buffer):
+            raise StopIteration()
+        val = self._buffer[offset]
         self.index += self.dir
         return val
 
