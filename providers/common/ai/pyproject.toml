@@ -67,7 +67,7 @@ requires-python = ">=3.10"
 # Make sure to run ``prek update-providers-dependencies --all-files``
 # After you modify the dependencies, and rebuild your Breeze CI image with ``breeze ci-image build``
 dependencies = [
-    "apache-airflow>=3.0.0",
+    "apache-airflow>=3.2.2",
     "apache-airflow-providers-common-compat>=1.15.0",
     "apache-airflow-providers-standard>=1.12.1",
     # Requires the pydantic-ai 2.x agent/instrumentation API (see #69122).
@@ -113,7 +113,7 @@ dependencies = [
     "apache-airflow-providers-common-sql>=1.33.0"
 ]
 "langchain" = [
-    "langchain>=1.0.0",
+    "langchain>=1.3.9",
 ]
 "llamaindex" = [
     "dataclasses-json>=0.6.7",
@@ -121,7 +121,7 @@ dependencies = [
     "llama-index-embeddings-openai>=0.6.0",
     "llama-index-llms-openai>=0.6.0",
 ]
-"pdf" = ["pypdf>=4.0.0"]
+"pdf" = ["pypdf>=4.0.2"]
 "docx" = ["python-docx>=1.0.0"]
 "git" = [
     "apache-airflow-providers-git"
@@ -141,7 +141,7 @@ dev = [
     "pydantic-ai-slim[mcp]>=2.0.0",
     "pydantic-ai-skills>=1.2.0",
     "apache-airflow-providers-common-sql[datafusion]",
-    "langchain>=1.0.0",
+    "langchain>=1.3.9",
     "llama-index-core>=0.13.0",
     "llama-index-embeddings-openai>=0.6.0",
     "llama-index-llms-openai>=0.6.0",

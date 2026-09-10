@@ -61,7 +61,7 @@ requires-python = ">=3.10"
 dependencies = [
     "apache-airflow>=2.11.0",
     "apache-airflow-providers-common-compat>=1.14.1",
-    "sqlparse>=0.5.1",
+    "sqlparse>=0.5.5",
     "more-itertools>=9.0.0",
     # The methodtools dependency is necessary since the introduction of dialects:
     # https://github.com/apache/airflow/pull/41327/files
