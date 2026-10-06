@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
@@ -5774,7 +5774,7 @@ docs = [
 requires-dist = [
     { name = "apache-airflow", editable = "." },
     { name = "apache-airflow-providers-common-compat", editable = "providers/common/compat" },
-    { name = "gitpython", specifier = ">=3.1.44" },
+    { name = "gitpython", specifier = ">=3.1.50" },
     { name = "pygithub", marker = "extra == 'github'", specifier = ">=2.1.1" },
 ]
 provides-extras = ["github"]
